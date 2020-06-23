@@ -1,80 +1,76 @@
 org 100h
 
 .data
-    numri dw ?
-    rreshtIRi db 0ah, 0dh,"$"
-    tekstMesazhi db "Shkruaj nje numer: $"
-    tekstRezultati db "Rezultati eshte: $" 
-    faktorieli db ? 
+    newLine db 0ah, 0dh,"$"
+    description db "Type a number: $"
+    message db "Result is: $" 
 
 .code
-    mov dx, offset tekstMesazhi
-    mov ah, 09h                   ; Udhezimi per te shtyp nje numer
+    mov dx, offset description
+    mov ah, 09h                  ; Description for writing a number
     int 21h 
     
     mov ah, 01h    
-    int 21h                      ; Kerkohet nga perdoruesi te shtyp nje numer                     
-    mov bl, al                   ; Vleren e dhene e ruajme te regjistri bx, perkatesisht bl
-    sub bx, 30h                  ; Vleres se dhene ne regjistrin bx, i zbresim 30h, per te dalur te numrat 0-9  
+    int 21h                     ; Write a number                  
+    mov bl, al                  ; Value is stored in bx register, respectively in bl
+    sub bx, 30h                 ; Substract value in bx with 30h (there are numbers in ASCII code)
                                                               
-    mov dx,offset rreshtIRi  ;
-    mov ah, 09h              ; Dalja ne rresht tjeter per qeshtje dizajni
-    int 21h                  ;
+    mov dx,offset newLine       ;
+    mov ah, 09h                 ; New Line
+    int 21h
                                
-    mov dx, offset tekstRezultati ;
+    mov dx, offset message
     mov ah, 09h 
-    int 21h                  ; Printimi i tekstit "Rezultati eshte:"
+    int 21h                     ; Print message
     mov ax, bx
    
-    mov cx, 0 ; Behet 0 per t'i numeruar elementet te futura ne stack 
+    mov cx, 0                   ; Counter is used to count elements in stack
     mov dx, 0
     
     
-Llogarit:
+Calculate:
     cmp bx, 1
-    je Paraqit
-    
-    ; Behet llogaritja e faktorielit pra vlera eshte e ruajtur ne ax, e cila shumezohet me bx e cila pas qdo hapi zvogelohet per 1 
-    
+    je Show   
+                                ; Value is stored in ax register   
     dec bx
     mul bx
-    jmp Llogarit                 
+    jmp Calculate                 
     
-Paraqit:
-    mov bx, 10 ; Me pjestu me 10 per me fitu mbetjen
-    cmp ax, 9       ; Nese vlera eshte me e madhe se 10 ekzekutohet label NumriShumeShifror
-    ja NumriShumeShifror
+Show:
+    mov bx, 10                  ; Divide by 10 to store modulus in another register
+    cmp ax, 9                   ; If value is greater than 10, call method "MultiDigit"
+    ja MultiDigit
                    
     mov dx, ax
-    add dx, 48       ;
-    mov ah, 02h      ; Printimi i nurmit me te vogel se 10
-    int 21h          ;    
+    add dx, 48
+    mov ah, 02h                 ; Print number who is less than 10
+    int 21h  
     jmp Exit
     
-NumriShumeShifror:        ; Nese vlera eshte me e vogel se 10, nuk ekzekutohet kjo metode por vetem label Paraqit
-    mov dx, 0             ; dx e bejme 0 per shkak se gjate pjestimit mbetja ruhet tek dx
-    cmp ax, 0             ; Nese nuk ka mbet me numer per te pjestuar (pra nese eshte 0) shkon te label PrintoNumrinShumeShifror
-    je PrintoNumrinShumeShifror
+MultiDigit:                     ; If factoriel calculation is smaller than 10, this method does not execute
+    mov dx, 0                   ; Changing dx value with 0, because dx is needed at next step
+    cmp ax, 0                   ; If there is not another number to divide, call method PrintMultiDigitNumber
+    je PrintMultiDigitNumber
     div bx
-    push dx                ; Vleren e dx e ruajme ne stack
+    push dx                     ; Store value of dx in stack
     
-    inc cx                 ; Sepse kemi dashur ta dijme sa vlera jane ruajtur ne stack
-    jmp NumriShumeShifror  ; Kjo label perseritet perderisa ax eshte me e madhe se 0
+    inc cx                      ; For counting all elements in stack
+    jmp MultiDigit              ; Repeat this method while ax is greater than 0
                   
                   
                   
-PrintoNumrinShumeShifror:
-    cmp cx, 0        ; Nese nuk kemi me numer per te printuar atehere shko te label Exit
+PrintMultiDigitNumber:
+    cmp cx, 0                   ; If there is not any number to print, call method Exit
     je Exit
     
-    pop dx           ; E marrim vleren e fundit nga Stack e ruajme ne dx, dhe i shtojme 48 per te dalur tek numrat ne ASCII code
+    pop dx                      ; Pop value from stack, store in dx register, and add 48 (because there are numbers in ASCII code)
     add dx, 48
     
     mov ah, 02h
-    int 21h          ; Printimi i numrit
+    int 21h                     ; Print number
     dec cx           
-    mov dx, 0        ;I jepim vleren 0 per t'a bere gati per llogaritjen e ardhshme
-    jmp PrintoNumrinShumeShifror  
+    mov dx, 0                   ; Reset dx for next calculation
+    jmp PrintMultiDigitNumber  
     
        
 Exit:
